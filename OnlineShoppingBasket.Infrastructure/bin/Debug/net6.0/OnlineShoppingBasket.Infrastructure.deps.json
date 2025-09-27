@@ -1,0 +1,49 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "OnlineShoppingBasket.Infrastructure/1.0.0": {
+        "dependencies": {
+          "OnlineShoppingBasket.Core": "1.0.0"
+        },
+        "runtime": {
+          "OnlineShoppingBasket.Infrastructure.dll": {}
+        }
+      },
+      "OnlineShoppingBasket.Core/1.0.0": {
+        "dependencies": {
+          "OnlineShoppingBasket.Models": "1.0.0"
+        },
+        "runtime": {
+          "OnlineShoppingBasket.Core.dll": {}
+        }
+      },
+      "OnlineShoppingBasket.Models/1.0.0": {
+        "runtime": {
+          "OnlineShoppingBasket.Models.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "OnlineShoppingBasket.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OnlineShoppingBasket.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OnlineShoppingBasket.Models/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
