@@ -1,9 +1,9 @@
-using OnlineShoppingBasket.Core;
+using OnlineShoppingBasket.Core.Repositories;
 using OnlineShoppingBasket.Models;
 
-namespace OnlineShoppingBasket.Infrastructure;
+namespace OnlineShoppingBasket.Infrastructure.InMemoryRepositories;
 
-public class InMemoryProductRepository : IProductRepository
+public class ProductRepository : IProductRepository
 {
     private static readonly Dictionary<string, Product> _products = new()
     {

@@ -1,9 +1,9 @@
-using OnlineShoppingBasket.Core;
+using OnlineShoppingBasket.Core.Repositories;
 using OnlineShoppingBasket.Models;
 
-namespace OnlineShoppingBasket.Infrastructure;
+namespace OnlineShoppingBasket.Infrastructure.InMemoryRepositories;
 
-public class InMemoryDiscountRepository : IDiscountRepository
+public class DiscountRepository : IDiscountRepository
 {
     private readonly Dictionary<string, Discount> _discounts = new()
     {

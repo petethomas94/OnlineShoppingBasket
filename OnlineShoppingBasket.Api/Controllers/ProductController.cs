@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using OnlineShoppingBasket.Core;
+using OnlineShoppingBasket.Core.Repositories;
 using OnlineShoppingBasket.Models;
 
 namespace OnlineShoppingBasket.Api.Controllers;

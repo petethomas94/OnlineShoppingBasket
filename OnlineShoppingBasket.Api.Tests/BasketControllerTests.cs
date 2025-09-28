@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using OnlineShoppingBasket.Api.Controllers;
-using OnlineShoppingBasket.Core;
+using OnlineShoppingBasket.Core.Repositories;
+using OnlineShoppingBasket.Core.Services;
 using OnlineShoppingBasket.Models;
 
 namespace OnlineShoppingBasket.Api.Tests;
@@ -14,6 +15,8 @@ public class BasketControllerTests
     private readonly Mock<IBasketRepository> _basketRepository = new();
     private readonly Mock<IProductRepository> _productRepository = new();
     private readonly Mock<IBasketCalculationService> _basketCalculationService = new();
+    private readonly Mock<IShippingCostRepository> _shippingCostRepository = new();
+    
     private readonly Mock<IDiscountRepository> _discountRepository = new();
 
     
@@ -26,7 +29,12 @@ public class BasketControllerTests
 
     public BasketControllerTests()
     {
-        _basketController = new BasketController(_basketRepository.Object, _productRepository.Object, _basketCalculationService.Object, _discountRepository.Object);
+        _basketController = new BasketController(
+            _basketRepository.Object, 
+            _productRepository.Object, 
+            _discountRepository.Object,
+            _shippingCostRepository.Object,
+            _basketCalculationService.Object);
     }
     
     [Fact]

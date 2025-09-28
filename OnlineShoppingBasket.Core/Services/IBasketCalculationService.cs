@@ -1,6 +1,6 @@
 using OnlineShoppingBasket.Models;
 
-namespace OnlineShoppingBasket.Core;
+namespace OnlineShoppingBasket.Core.Services;
 
 public interface IBasketCalculationService
 {

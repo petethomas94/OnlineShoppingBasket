@@ -1,5 +1,6 @@
-using OnlineShoppingBasket.Core;
-using OnlineShoppingBasket.Infrastructure;
+using OnlineShoppingBasket.Core.Repositories;
+using OnlineShoppingBasket.Core.Services;
+using OnlineShoppingBasket.Infrastructure.InMemoryRepositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +10,11 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<IBasketRepository, InMemoryBasketRepository>();
-builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddSingleton<IBasketRepository, BasketRepository>();
+builder.Services.AddSingleton<IProductRepository, ProductRepository>();
 builder.Services.AddSingleton<IBasketCalculationService, BasketCalculationService>();
-builder.Services.AddSingleton<IDiscountRepository, InMemoryDiscountRepository>();
+builder.Services.AddSingleton<IDiscountRepository, DiscountRepository>();
+builder.Services.AddSingleton<IShippingCostRepository, ShippingCostRepository>();
 
 var app = builder.Build();
 

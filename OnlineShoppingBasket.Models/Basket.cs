@@ -10,4 +10,5 @@ public class Basket
     public string Id { get; set; }
     public List<BasketItem> Items { get; set; }
     public string DiscountId { get; set; }
+    public string? ShippingTo { get; set; }
 }

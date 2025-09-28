@@ -1,16 +1,22 @@
+using OnlineShoppingBasket.Core.Repositories;
 using OnlineShoppingBasket.Models;
 
-namespace OnlineShoppingBasket.Core;
+namespace OnlineShoppingBasket.Core.Services;
 
 public class BasketCalculationService : IBasketCalculationService
 {
     private readonly IProductRepository _productRepository;
     private readonly IDiscountRepository _discountRepository;
+    private readonly IShippingCostRepository _shippingCostRepository;
 
-    public BasketCalculationService(IProductRepository productRepository, IDiscountRepository discountRepository)
+    public BasketCalculationService(
+        IProductRepository productRepository, 
+        IDiscountRepository discountRepository,
+        IShippingCostRepository shippingCostRepository)
     {
         _productRepository = productRepository;
         _discountRepository = discountRepository;
+        _shippingCostRepository = shippingCostRepository;
     }
 
     public decimal CalculateTotal(Basket basket)
@@ -26,9 +32,12 @@ public class BasketCalculationService : IBasketCalculationService
         var discountIds = basket.Items
             .Where(x => !string.IsNullOrEmpty(x.DiscountId))
             .Select(x => x.DiscountId)
+            .Union(string.IsNullOrEmpty(basket.DiscountId) ? new string[0] : new[] { basket.DiscountId })
             .Distinct();
         
         var discounts = _discountRepository.GetDiscountsById(discountIds);
+
+        var shippingCost = _shippingCostRepository.GetShippingCostByCountry(basket.ShippingTo);
 
         var itemsWithDiscounts = 0m;
         var itemsWithoutDiscounts = 0m;
@@ -57,7 +66,7 @@ public class BasketCalculationService : IBasketCalculationService
             itemsWithoutDiscounts -= Math.Min(basketDiscountAmount, itemsWithoutDiscounts);
         }
 
-        return itemsWithDiscounts + itemsWithoutDiscounts;
+        return itemsWithDiscounts + itemsWithoutDiscounts + (shippingCost?.Price ?? 0);
     }
 
     public decimal CalculateTotalWithVat(Basket basket, decimal vatRate = 0.20m)

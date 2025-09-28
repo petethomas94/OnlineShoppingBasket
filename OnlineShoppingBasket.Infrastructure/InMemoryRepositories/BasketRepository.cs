@@ -1,9 +1,9 @@
-﻿using OnlineShoppingBasket.Core;
+﻿using OnlineShoppingBasket.Core.Repositories;
 using OnlineShoppingBasket.Models;
 
-namespace OnlineShoppingBasket.Infrastructure;
+namespace OnlineShoppingBasket.Infrastructure.InMemoryRepositories;
 
-public class InMemoryBasketRepository : IBasketRepository
+public class BasketRepository : IBasketRepository
 {
     private readonly Dictionary<string, Basket> _baskets = new();
     
@@ -23,7 +23,7 @@ public class InMemoryBasketRepository : IBasketRepository
 
         if (basket.Items.Any(x => x.ProductId == item.ProductId))
         {
-            basket.Items.Single(x => x.ProductId == item.ProductId).Quantity += item.Quantity;
+            basket.Items.Single(x => x.ProductId == item.ProductId).Quantity = item.Quantity;
             return;
         }
 

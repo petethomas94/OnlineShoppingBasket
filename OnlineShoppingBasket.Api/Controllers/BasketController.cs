@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using OnlineShoppingBasket.Core;
+using OnlineShoppingBasket.Core.Repositories;
+using OnlineShoppingBasket.Core.Services;
 using OnlineShoppingBasket.Models;
 
 namespace OnlineShoppingBasket.Api.Controllers;
@@ -11,18 +12,21 @@ public class BasketController : ControllerBase
     private readonly IBasketRepository _basketRepository;
     private readonly IProductRepository _productRepository;
     private readonly IDiscountRepository _discountRepository;
+    private readonly IShippingCostRepository _shippingCostRepository;
     private readonly IBasketCalculationService _basketCalculationService;
 
     public BasketController(
         IBasketRepository basketRepository, 
         IProductRepository productRepository,
-        IBasketCalculationService basketCalculationService, 
-        IDiscountRepository discountRepository)
+        IDiscountRepository discountRepository,
+        IShippingCostRepository shippingCostRepository,
+        IBasketCalculationService basketCalculationService)
     {
         _basketRepository = basketRepository;
         _productRepository = productRepository;
-        _basketCalculationService = basketCalculationService;
         _discountRepository = discountRepository;
+        _shippingCostRepository = shippingCostRepository;
+        _basketCalculationService = basketCalculationService;
     }
 
     [HttpPost]
@@ -85,7 +89,7 @@ public class BasketController : ControllerBase
         {
             return NotFound("Basket not found.");
         }
-
+        
         var totalWithVat = _basketCalculationService.CalculateTotalWithVat(basket);
         return Ok(totalWithVat);
     }
@@ -119,6 +123,26 @@ public class BasketController : ControllerBase
         }
 
         basket.DiscountId = discountId;
+        _basketRepository.SaveBasket(basket);
+        return Ok(basket);
+    }
+    
+    [HttpPost("{basketId}/shippingcost/{country}")]
+    public ActionResult<Basket> AddShippingCostToBasket(string basketId, string country)
+    {
+        var basket = _basketRepository.GetBasket(basketId);
+        if (basket == null)
+        {
+            return NotFound("Basket not found.");
+        }
+
+        var discount = _shippingCostRepository.GetShippingCostByCountry(country);
+        if (discount == null)
+        {
+            return NotFound($"Shipping not supported for {country}");
+        }
+
+        basket.ShippingTo = country;
         _basketRepository.SaveBasket(basket);
         return Ok(basket);
     }
