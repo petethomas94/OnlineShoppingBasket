@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Core",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Infrastructure", "OnlineShoppingBasket.Infrastructure\OnlineShoppingBasket.Infrastructure.csproj", "{27F3FBC6-77B9-4E06-BCF4-13E738D1DA2E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B00775D2-BA8B-47DF-8765-B671822AE773}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Api.Tests", "OnlineShoppingBasket.Api.Tests\OnlineShoppingBasket.Api.Tests.csproj", "{EDCB0630-59FD-446B-847D-5D23B6B4D7B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,12 @@ Global
 		{27F3FBC6-77B9-4E06-BCF4-13E738D1DA2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27F3FBC6-77B9-4E06-BCF4-13E738D1DA2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27F3FBC6-77B9-4E06-BCF4-13E738D1DA2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4} = {B00775D2-BA8B-47DF-8765-B671822AE773}
 	EndGlobalSection
 EndGlobal

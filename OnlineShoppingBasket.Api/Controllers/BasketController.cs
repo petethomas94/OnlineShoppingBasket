@@ -29,7 +29,10 @@ public class BasketController : ControllerBase
     public ActionResult<Basket> GetBasket(string basketId)
     {
         var basket = _basketRepository.GetBasket(basketId);
-        return basket == null ? NotFound("Basket not found.") : new ActionResult<Basket>(basket);
+        if (basket == null)
+            return NotFound("Basket not found.");
+        else
+            return Ok(basket);
     }
 
     [HttpPost("{basketId}/items")]
