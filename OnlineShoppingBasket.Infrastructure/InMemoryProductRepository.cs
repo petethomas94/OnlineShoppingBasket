@@ -3,7 +3,6 @@ using OnlineShoppingBasket.Models;
 
 namespace OnlineShoppingBasket.Infrastructure;
 
-//TODO: sort this out
 public class InMemoryProductRepository : IProductRepository
 {
     private static readonly Dictionary<string, Product> _products = new()
@@ -21,5 +20,10 @@ public class InMemoryProductRepository : IProductRepository
     public Product? GetProductById(string id)
     {
         return _products.GetValueOrDefault(id);
+    }
+
+    public Dictionary<string, Product> GetProductsById(IEnumerable<string> ids)
+    {
+        return _products.Where(p => ids.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value);
     }
 }

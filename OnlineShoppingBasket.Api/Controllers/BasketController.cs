@@ -10,11 +10,19 @@ public class BasketController : ControllerBase
 {
     private readonly IBasketRepository _basketRepository;
     private readonly IProductRepository _productRepository;
+    private readonly IDiscountRepository _discountRepository;
+    private readonly IBasketCalculationService _basketCalculationService;
 
-    public BasketController(IBasketRepository basketRepository, IProductRepository productRepository)
+    public BasketController(
+        IBasketRepository basketRepository, 
+        IProductRepository productRepository,
+        IBasketCalculationService basketCalculationService, 
+        IDiscountRepository discountRepository)
     {
         _basketRepository = basketRepository;
         _productRepository = productRepository;
+        _basketCalculationService = basketCalculationService;
+        _discountRepository = discountRepository;
     }
 
     [HttpPost]
@@ -29,33 +37,89 @@ public class BasketController : ControllerBase
     public ActionResult<Basket> GetBasket(string basketId)
     {
         var basket = _basketRepository.GetBasket(basketId);
-        if (basket == null)
-            return NotFound("Basket not found.");
-        else
-            return Ok(basket);
+        return basket == null ? NotFound("Basket not found.") : Ok(basket);
     }
 
     [HttpPost("{basketId}/items")]
-    public ActionResult<Basket> AddItem(string basketId, [FromBody] BasketItem basketItem)
+    public ActionResult<Basket> AddItem(string basketId, [FromBody] IEnumerable<BasketItem> basketItems)
     {
-        if (basketItem.Quantity <= 0)
-        {
-            return BadRequest("Quantity must be greater than 0.");
-        }
-        
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Product not found.");
+            return NotFound("Basket not found.");
         }
-        
-        var product = _productRepository.GetProductById(basketItem.ProductId);
-        if (product == null)
+
+        foreach (var basketItem in basketItems)
         {
-            return NotFound("Product not found.");
+            if (basketItem.Quantity <= 0)
+            {
+                return BadRequest($"Quantity must be greater than 0 for product {basketItem.ProductId}.");
+            }
+
+            var product = _productRepository.GetProductById(basketItem.ProductId);
+            if (product == null)
+            {
+                return NotFound($"Product {basketItem.ProductId} not found.");
+            }
+
+            if (basketItem.DiscountId != null)
+            {
+                var discount = _discountRepository.GetDiscountById(basketItem.DiscountId);
+                if (discount == null)
+                {
+                    return NotFound($"Discount {basketItem.DiscountId} not found.");
+                }    
+            }
+
+            _basketRepository.AddItemToBasket(basketId, basketItem);
         }
-        
-        _basketRepository.AddItemToBasket(basketId, basketItem);
-        return Ok();
+
+        return Ok(basket);
+    }
+    
+    [HttpGet("{basketId}/total")]
+    public ActionResult<decimal> GetBasketTotal(string basketId)
+    {
+        var basket = _basketRepository.GetBasket(basketId);
+        if (basket == null)
+        {
+            return NotFound("Basket not found.");
+        }
+
+        var totalWithVat = _basketCalculationService.CalculateTotalWithVat(basket);
+        return Ok(totalWithVat);
+    }
+    
+    [HttpGet("{basketId}/totalWithoutVat")]
+    public ActionResult<decimal> GetBasketTotalWithoutVat(string basketId)
+    {
+        var basket = _basketRepository.GetBasket(basketId);
+        if (basket == null)
+        {
+            return NotFound("Basket not found.");
+        }
+
+        var totalWithoutVat = _basketCalculationService.CalculateTotal(basket);
+        return Ok(totalWithoutVat);
+    }
+
+    [HttpPost("{basketId}/discount/{discountId}")]
+    public ActionResult<Basket> AddDiscountToBasket(string basketId, string discountId)
+    {
+        var basket = _basketRepository.GetBasket(basketId);
+        if (basket == null)
+        {
+            return NotFound("Basket not found.");
+        }
+
+        var discount = _discountRepository.GetDiscountById(discountId);
+        if (discount == null)
+        {
+            return NotFound($"Discount not found {discountId}");
+        }
+
+        basket.DiscountId = discountId;
+        _basketRepository.SaveBasket(basket);
+        return Ok(basket);
     }
 }

@@ -26,7 +26,7 @@ public class InMemoryBasketRepository : IBasketRepository
             basket.Items.Single(x => x.ProductId == item.ProductId).Quantity += item.Quantity;
             return;
         }
-        
+
         basket.Items.Add(item);
     }
 }

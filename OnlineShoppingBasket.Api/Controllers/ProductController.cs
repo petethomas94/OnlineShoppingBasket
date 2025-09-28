@@ -21,5 +21,4 @@ public class ProductController : ControllerBase
         var products = _productRepository.GetAllProducts();
         return Ok(products);
     }
-    
 }

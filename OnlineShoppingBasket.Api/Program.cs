@@ -11,6 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IBasketRepository, InMemoryBasketRepository>();
 builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddSingleton<IBasketCalculationService, BasketCalculationService>();
+builder.Services.AddSingleton<IDiscountRepository, InMemoryDiscountRepository>();
 
 var app = builder.Build();
 
