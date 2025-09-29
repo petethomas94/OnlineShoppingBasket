@@ -16,7 +16,6 @@ public class BasketControllerTests
     private readonly Mock<IProductRepository> _productRepository = new();
     private readonly Mock<IBasketCalculationService> _basketCalculationService = new();
     private readonly Mock<IShippingCostRepository> _shippingCostRepository = new();
-    
     private readonly Mock<IDiscountRepository> _discountRepository = new();
 
     
@@ -231,6 +230,26 @@ public class BasketControllerTests
     }
 
     [Fact]
+    public void GetBasketTotal_ReturnsBadRequest_WhenShippingToIsNull()
+    {
+        // Arrange
+        var basketItem = new BasketItem { ProductId = _product.Id, Quantity = 2 };
+        _basket.Items = new List<BasketItem> { basketItem };
+        _basket.ShippingTo = null;
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+
+        // Act
+        var result = _basketController.GetBasketTotal(_basket.Id);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("Add a shipping destination before calculating total.", badRequestResult.Value);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+        _basketCalculationService.Verify(x => x.CalculateTotalWithVat(It.IsAny<Basket>(), 0.2m), Times.Never);
+    }
+
+    [Fact]
     public void GetBasketTotalWithoutVat_ReturnsTotal_WhenBasketExists()
     {
         // Arrange
@@ -265,6 +284,26 @@ public class BasketControllerTests
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("Basket not found.", notFoundResult.Value);
         Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
+        _basketCalculationService.Verify(x => x.CalculateTotal(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void GetBasketTotalWithoutVat_ReturnsBadRequest_WhenShippingToIsNull()
+    {
+        // Arrange
+        var basketItem = new BasketItem { ProductId = _product.Id, Quantity = 2 };
+        _basket.Items = new List<BasketItem> { basketItem };
+        _basket.ShippingTo = null;
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+
+        // Act
+        var result = _basketController.GetBasketTotalWithoutVat(_basket.Id);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("Add a shipping destination before calculating total.", badRequestResult.Value);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
         _basketCalculationService.Verify(x => x.CalculateTotal(It.IsAny<Basket>()), Times.Never);
     }
 
@@ -325,5 +364,86 @@ public class BasketControllerTests
         Assert.Equal($"Discount not found {discountId}", notFoundResult.Value);
         Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
         _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void DeleteItem_ReturnsOk_WhenItemDeletedSuccessfully()
+    {
+        // Arrange
+        var basketItem = new BasketItem { ProductId = _product.Id, Quantity = 2 };
+        _basket.Items = new List<BasketItem> { basketItem };
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+
+        // Act
+        var result = _basketController.DeleteItem(_basket.Id, _product.Id);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(_basket, okResult.Value);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+        Assert.Empty(_basket.Items);
+        _basketRepository.Verify(x => x.SaveBasket(_basket), Times.Once);
+    }
+
+    [Fact]
+    public void DeleteItem_ReturnsNotFound_WhenBasketDoesNotExist()
+    {
+        // Arrange
+        var basketId = "nonexistent-basket";
+        var productId = "product123";
+
+        _basketRepository.Setup(x => x.GetBasket(basketId)).Returns((Basket)null);
+
+        // Act
+        var result = _basketController.DeleteItem(basketId, productId);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("Basket not found.", notFoundResult.Value);
+        Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
+        _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void DeleteItem_ReturnsNotFound_WhenProductNotInBasket()
+    {
+        // Arrange
+        var productId = "nonexistent-product";
+        var basketItem = new BasketItem { ProductId = "different-product", Quantity = 1 };
+        _basket.Items = new List<BasketItem> { basketItem };
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+
+        // Act
+        var result = _basketController.DeleteItem(_basket.Id, productId);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal($"Trying to remove product which does not exist in order {productId}", notFoundResult.Value);
+        Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
+        _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void DeleteItem_RemovesCorrectItem_WhenMultipleItemsInBasket()
+    {
+        // Arrange
+        var basketItem1 = new BasketItem { ProductId = "product1", Quantity = 1 };
+        var basketItem2 = new BasketItem { ProductId = "product2", Quantity = 2 };
+        _basket.Items = new List<BasketItem> { basketItem1, basketItem2 };
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+
+        // Act
+        var result = _basketController.DeleteItem(_basket.Id, "product1");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(_basket, okResult.Value);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+        Assert.Single(_basket.Items);
+        Assert.Equal("product2", _basket.Items.First().ProductId);
+        _basketRepository.Verify(x => x.SaveBasket(_basket), Times.Once);
     }
 }

@@ -32,7 +32,6 @@ public class BasketCalculationService : IBasketCalculationService
         var discountIds = basket.Items
             .Where(x => !string.IsNullOrEmpty(x.DiscountId))
             .Select(x => x.DiscountId)
-            .Union(string.IsNullOrEmpty(basket.DiscountId) ? new string[0] : new[] { basket.DiscountId })
             .Distinct();
         
         var discounts = _discountRepository.GetDiscountsById(discountIds);
@@ -58,7 +57,6 @@ public class BasketCalculationService : IBasketCalculationService
             }
         }
 
-        // Apply basket-level discount only to items without individual discounts
         if (!string.IsNullOrEmpty(basket.DiscountId) && discounts.ContainsKey(basket.DiscountId))
         {
             var basketDiscount = discounts[basket.DiscountId];

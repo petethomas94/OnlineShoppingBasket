@@ -80,6 +80,26 @@ public class BasketController : ControllerBase
 
         return Ok(basket);
     }
+
+    [HttpDelete("{basketId}/items/{productId}")]
+    public ActionResult<Basket> DeleteItem(string basketId, string productId)
+    {
+        var basket = _basketRepository.GetBasket(basketId);
+        if (basket == null)
+        {
+            return NotFound("Basket not found.");
+        }
+
+        var basketItem = basket.Items.FirstOrDefault(x => x.ProductId == productId);
+        if (basketItem == null)
+        {
+            return NotFound($"Trying to remove product which does not exist in order {productId}");
+        }
+
+        basket.Items.Remove(basketItem);
+        _basketRepository.SaveBasket(basket);
+        return Ok(basket);
+    }
     
     [HttpGet("{basketId}/total")]
     public ActionResult<decimal> GetBasketTotal(string basketId)
@@ -88,6 +108,10 @@ public class BasketController : ControllerBase
         if (basket == null)
         {
             return NotFound("Basket not found.");
+        }
+        if (basket.ShippingTo == null)
+        {
+            return BadRequest("Add a shipping destination before calculating total.");
         }
         
         var totalWithVat = _basketCalculationService.CalculateTotalWithVat(basket);
@@ -101,6 +125,10 @@ public class BasketController : ControllerBase
         if (basket == null)
         {
             return NotFound("Basket not found.");
+        }
+        if (basket.ShippingTo == null)
+        {
+            return BadRequest("Add a shipping destination before calculating total.");
         }
 
         var totalWithoutVat = _basketCalculationService.CalculateTotal(basket);
