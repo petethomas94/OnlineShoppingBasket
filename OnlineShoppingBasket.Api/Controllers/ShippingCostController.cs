@@ -6,7 +6,7 @@ namespace OnlineShoppingBasket.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ShippingCostController
+public class ShippingCostController : ControllerBase
 {
     private readonly IShippingCostRepository _shippingCostRepository;
 
