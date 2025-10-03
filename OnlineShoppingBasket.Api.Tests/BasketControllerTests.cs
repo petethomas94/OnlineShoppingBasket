@@ -21,7 +21,8 @@ public class BasketControllerTests
     
     private readonly Basket _basket = new()
     {
-        Id = Guid.NewGuid().ToString()
+        Id = Guid.NewGuid().ToString(),
+        ShippingTo = "GB"
     };
 
     private readonly Product _product = new() { Id = "product123" };
@@ -201,7 +202,7 @@ public class BasketControllerTests
 
         _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
         _basketCalculationService.Setup(x => x.CalculateTotalWithVat(_basket, 0.2m)).Returns(expectedTotal);
-
+        
         // Act
         var result = _basketController.GetBasketTotal(_basket.Id);
 
@@ -259,7 +260,7 @@ public class BasketControllerTests
 
         _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
         _basketCalculationService.Setup(x => x.CalculateTotal(_basket)).Returns(expectedTotal);
-
+        
         // Act
         var result = _basketController.GetBasketTotalWithoutVat(_basket.Id);
 
@@ -444,6 +445,89 @@ public class BasketControllerTests
         Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
         Assert.Single(_basket.Items);
         Assert.Equal("product2", _basket.Items.First().ProductId);
+        _basketRepository.Verify(x => x.SaveBasket(_basket), Times.Once);
+    }
+
+    [Fact]
+    public void AddShippingCostToBasket_ReturnsOk_WhenShippingCostAddedSuccessfully()
+    {
+        // Arrange
+        var country = "US";
+        var shippingCost = new ShippingCost { Country = country, Price = 15.00m };
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(country)).Returns(shippingCost);
+
+        // Act
+        var result = _basketController.AddShippingCostToBasket(_basket.Id, country);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(_basket, okResult.Value);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+        Assert.Equal(country, _basket.ShippingTo);
+        _basketRepository.Verify(x => x.SaveBasket(_basket), Times.Once);
+    }
+
+    [Fact]
+    public void AddShippingCostToBasket_ReturnsNotFound_WhenBasketDoesNotExist()
+    {
+        // Arrange
+        var basketId = "nonexistent-basket";
+        var country = "US";
+
+        _basketRepository.Setup(x => x.GetBasket(basketId)).Returns((Basket)null);
+
+        // Act
+        var result = _basketController.AddShippingCostToBasket(basketId, country);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("Basket not found.", notFoundResult.Value);
+        Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
+        _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void AddShippingCostToBasket_ReturnsNotFound_WhenShippingNotSupportedForCountry()
+    {
+        // Arrange
+        var country = "UNSUPPORTED";
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(country)).Returns((ShippingCost)null);
+
+        // Act
+        var result = _basketController.AddShippingCostToBasket(_basket.Id, country);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal($"Shipping not supported for {country}", notFoundResult.Value);
+        Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
+        _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
+    }
+
+    [Fact]
+    public void AddShippingCostToBasket_UpdatesExistingShippingDestination_WhenBasketAlreadyHasShipping()
+    {
+        // Arrange
+        var oldCountry = "FR";
+        var newCountry = "DE";
+        var newShippingCost = new ShippingCost { Country = newCountry, Price = 12.00m };
+        
+        _basket.ShippingTo = oldCountry;
+
+        _basketRepository.Setup(x => x.GetBasket(_basket.Id)).Returns(_basket);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(newCountry)).Returns(newShippingCost);
+
+        // Act
+        var result = _basketController.AddShippingCostToBasket(_basket.Id, newCountry);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(_basket, okResult.Value);
+        Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
+        Assert.Equal(newCountry, _basket.ShippingTo);
         _basketRepository.Verify(x => x.SaveBasket(_basket), Times.Once);
     }
 }

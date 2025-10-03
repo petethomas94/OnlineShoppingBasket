@@ -18,6 +18,7 @@ public class DiscountController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<Discount>> GetDiscounts()
     {
-        return _discountRepository.GetAllDiscounts();
+        var discounts = _discountRepository.GetAllDiscounts();
+        return Ok(discounts);
     }
 }

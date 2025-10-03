@@ -9,7 +9,7 @@ public class ShippingCostRepository : IShippingCostRepository
     {
         { "UK", new ShippingCost() { Country = "UK", Price = 3 } },
         { "FR", new ShippingCost() { Country = "FR", Price = 5 } },
-        { "US", new ShippingCost() { Country = "FR", Price = 7 } }
+        { "US", new ShippingCost() { Country = "US", Price = 7 } }
     };
     
     public List<ShippingCost> GetAllShippingCosts()

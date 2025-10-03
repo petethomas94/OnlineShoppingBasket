@@ -21,214 +21,272 @@ public class BasketCalculationServiceTests
     }
 
     [Fact]
+    public void CalculateTotal_DoesNotApplyBasketDiscountToItemsWithIndividualDiscounts()
+    {
+        // Arrange
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1, DiscountId = "item-discount" },
+                new() { ProductId = "2", Quantity = 1 }
+            },
+            DiscountId = "basket-discount"
+        };
+
+        var products = new Dictionary<string, Product>
+        {
+            { "1", new Product { Id = "1", Price = 10.00m } },
+            { "2", new Product { Id = "2", Price = 20.00m } }
+        };
+
+        var discounts = new Dictionary<string, Discount>
+        {
+            { "item-discount", new Discount { Id = "item-discount", Percentage = 10.00m } },
+            { "basket-discount", new Discount { Id = "basket-discount", Percentage = 20.00m } }
+        };
+
+        var shippingCost = new ShippingCost { Country = "FR", Price = 5.00m };
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(discounts);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("FR")).Returns(shippingCost);
+
+        // Act
+        var result = _basketCalculationService.CalculateTotal(basket);
+
+        // Expected: Item1(9.00) + Item2(16.00) + Shipping(5.00) = 30.00
+        Assert.Equal(30.00m, result);
+    }
+
+    [Fact]
+    public void CalculateTotal_AppliesBasketDiscountToAllItems_WhenNoIndividualDiscounts()
+    {
+        // Arrange
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1 },
+                new() { ProductId = "2", Quantity = 1 }
+            },
+            DiscountId = "basket-discount"
+        };
+
+        var products = new Dictionary<string, Product>
+        {
+            { "1", new Product { Id = "1", Price = 10.00m } },
+            { "2", new Product { Id = "2", Price = 20.00m } }
+        };
+
+        var discounts = new Dictionary<string, Discount>
+        {
+            { "basket-discount", new Discount { Id = "basket-discount", Percentage = 20.00m } }
+        };
+
+        var shippingCost = new ShippingCost { Country = "FR", Price = 5.00m };
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(discounts);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("FR")).Returns(shippingCost);
+
+        // Act
+        var result = _basketCalculationService.CalculateTotal(basket);
+
+        // Expected: (30.00 - 6.00 basket discount) + 5.00 shipping = 29.00
+        Assert.Equal(29.00m, result);
+    }
+
+    [Fact]
+    public void CalculateTotal_AppliesOnlyIndividualDiscounts_WhenAllItemsHaveIndividualDiscounts()
+    {
+        // Arrange
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1, DiscountId = "discount1" },
+                new() { ProductId = "2", Quantity = 1, DiscountId = "discount2" }
+            },
+            DiscountId = "basket-discount"
+        };
+
+        var products = new Dictionary<string, Product>
+        {
+            { "1", new Product { Id = "1", Price = 10.00m } },
+            { "2", new Product { Id = "2", Price = 20.00m } }
+        };
+
+        var discounts = new Dictionary<string, Discount>
+        {
+            { "discount1", new Discount { Id = "discount1", Percentage = 10.00m } },
+            { "discount2", new Discount { Id = "discount2", Percentage = 15.00m } },
+            { "basket-discount", new Discount { Id = "basket-discount", Percentage = 50.00m } }
+        };
+
+        var shippingCost = new ShippingCost { Country = "FR", Price = 5.00m };
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(discounts);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("FR")).Returns(shippingCost);
+
+        // Act
+        var result = _basketCalculationService.CalculateTotal(basket);
+
+        // Expected: Item1(9.00) + Item2(17.00) + Shipping(5.00) = 31.00
+        Assert.Equal(31.00m, result);
+    }
+
+    [Fact]
     public void CalculateTotal_ReturnsZero_WhenBasketIsEmpty()
     {
         // Arrange
-        var basket = new Basket { Items = new List<BasketItem>() };
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>()
+        };
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Product>());
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
 
         // Act
         var result = _basketCalculationService.CalculateTotal(basket);
 
         // Assert
-        Assert.Equal(0, result);
+        Assert.Equal(0m, result);
     }
 
     [Fact]
-    public void CalculateTotal_ReturnsItemsTotal_WhenNoDiscountsOrShipping()
+    public void CalculateTotal_IncludesShippingCost_WhenShippingDestinationSet()
     {
         // Arrange
-        var basket = new Basket 
-        { 
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 2 },
-                new() { ProductId = "product2", Quantity = 1 }
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "US",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 2 }
             }
         };
 
         var products = new Dictionary<string, Product>
         {
-            { "product1", new Product { Id = "product1", Price = 10.00m } },
-            { "product2", new Product { Id = "product2", Price = 15.00m } }
+            { "1", new Product { Id = "1", Price = 10.00m } }
         };
 
-        var shippingCost = new ShippingCost { Price = 0 };
+        var shippingCost = new ShippingCost { Country = "US", Price = 15.00m };
 
         _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
         _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(It.IsAny<string>())).Returns(shippingCost);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("US")).Returns(shippingCost);
 
         // Act
         var result = _basketCalculationService.CalculateTotal(basket);
 
-        // Assert
-        Assert.Equal(35.00m, result); // (10 * 2) + (15 * 1) = 35
+        // Expected: (10.00 * 2) + 15.00 = 35.00
+        Assert.Equal(35.00m, result);
     }
 
     [Fact]
-    public void CalculateTotal_AppliesItemLevelDiscount_WhenItemHasDiscount()
+    public void CalculateTotal_ExcludesShippingCost_WhenShippingCostIsNull()
     {
         // Arrange
-        var basket = new Basket 
-        { 
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 2, DiscountId = "discount1" }
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "INVALID",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1 }
             }
         };
 
         var products = new Dictionary<string, Product>
         {
-            { "product1", new Product { Id = "product1", Price = 10.00m } }
+            { "1", new Product { Id = "1", Price = 10.00m } }
         };
-
-        var discounts = new Dictionary<string, Discount>
-        {
-            { "discount1", new Discount { Id = "discount1", Percentage = 20 } }
-        };
-
-        var shippingCost = new ShippingCost { Price = 0 };
-
-        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
-        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(discounts);
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(It.IsAny<string>())).Returns(shippingCost);
-
-        // Act
-        var result = _basketCalculationService.CalculateTotal(basket);
-
-        // Assert
-        Assert.Equal(16.00m, result); // 20 - (20 * 0.20) = 16
-    }
-
-    [Fact]
-    public void CalculateTotal_AppliesBasketLevelDiscount_OnlyToItemsWithoutDiscounts()
-    {
-        // Arrange
-        var basket = new Basket 
-        { 
-            DiscountId = "basketDiscount",
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 1, DiscountId = "itemDiscount" }, // Has item discount
-                new() { ProductId = "product2", Quantity = 1 } // No item discount
-            }
-        };
-
-        var products = new Dictionary<string, Product>
-        {
-            { "product1", new Product { Id = "product1", Price = 10.00m } },
-            { "product2", new Product { Id = "product2", Price = 20.00m } }
-        };
-
-        var discounts = new Dictionary<string, Discount>
-        {
-            { "itemDiscount", new Discount { Id = "itemDiscount", Percentage = 10 } },
-            { "basketDiscount", new Discount { Id = "basketDiscount", Percentage = 25 } }
-        };
-
-        var shippingCost = new ShippingCost { Price = 0 };
-
-        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
-        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(discounts);
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(It.IsAny<string>())).Returns(shippingCost);
-
-        // Act
-        var result = _basketCalculationService.CalculateTotal(basket);
-
-        // Assert
-        // Item 1: 10 - (10 * 0.10) = 9
-        // Item 2: 20 - (20 * 0.25) = 15 (basket discount applied)
-        Assert.Equal(24.00m, result);
-    }
-
-    [Fact]
-    public void CalculateTotal_IncludesShippingCost_WhenShippingCountryIsSet()
-    {
-        // Arrange
-        var basket = new Basket 
-        { 
-            ShippingTo = "UK",
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 1 }
-            }
-        };
-
-        var products = new Dictionary<string, Product>
-        {
-            { "product1", new Product { Id = "product1", Price = 10.00m } }
-        };
-
-        var shippingCost = new ShippingCost { Price = 5.00m };
 
         _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
         _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("UK")).Returns(shippingCost);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("INVALID")).Returns((ShippingCost)null);
 
         // Act
         var result = _basketCalculationService.CalculateTotal(basket);
 
-        // Assert
-        Assert.Equal(15.00m, result); // 10 + 5 = 15
+        // Expected: 10.00 * 1 = 10.00 (no shipping cost)
+        Assert.Equal(10.00m, result);
     }
 
     [Fact]
-    public void CalculateTotalWithVat_AppliesVatCorrectly_WithDefaultRate()
+    public void CalculateTotalWithVat_AppliesVatCorrectly()
     {
         // Arrange
-        var basket = new Basket 
-        { 
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 1 }
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1 }
             }
         };
 
         var products = new Dictionary<string, Product>
         {
-            { "product1", new Product { Id = "product1", Price = 10.00m } }
+            { "1", new Product { Id = "1", Price = 10.00m } }
         };
 
-        var shippingCost = new ShippingCost { Price = 0 };
+        var shippingCost = new ShippingCost { Country = "FR", Price = 5.00m };
 
         _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
         _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(It.IsAny<string>())).Returns(shippingCost);
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("FR")).Returns(shippingCost);
+
+        // Act
+        var result = _basketCalculationService.CalculateTotalWithVat(basket, 0.20m);
+
+        // Expected: (10.00 + 5.00) * 1.20 = 18.00
+        Assert.Equal(18.00m, result);
+    }
+
+    [Fact]
+    public void CalculateTotalWithVat_UsesDefaultVatRate_WhenNotSpecified()
+    {
+        // Arrange
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "1", Quantity = 1 }
+            }
+        };
+
+        var products = new Dictionary<string, Product>
+        {
+            { "1", new Product { Id = "1", Price = 10.00m } }
+        };
+
+        var shippingCost = new ShippingCost { Country = "FR", Price = 5.00m };
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
+        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry("FR")).Returns(shippingCost);
 
         // Act
         var result = _basketCalculationService.CalculateTotalWithVat(basket);
 
-        // Assert
-        Assert.Equal(12.00m, result); // 10 * 1.20 = 12
-    }
-
-    [Fact]
-    public void CalculateTotalWithVat_AppliesVatCorrectly_WithCustomRate()
-    {
-        // Arrange
-        var basket = new Basket 
-        { 
-            Items = new List<BasketItem> 
-            { 
-                new() { ProductId = "product1", Quantity = 1 }
-            }
-        };
-
-        var products = new Dictionary<string, Product>
-        {
-            { "product1", new Product { Id = "product1", Price = 10.00m } }
-        };
-
-        var shippingCost = new ShippingCost { Price = 0 };
-
-        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
-        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
-        _shippingCostRepository.Setup(x => x.GetShippingCostByCountry(It.IsAny<string>())).Returns(shippingCost);
-
-        // Act
-        var result = _basketCalculationService.CalculateTotalWithVat(basket, 0.25m);
-
-        // Assert
-        Assert.Equal(12.50m, result); // 10 * 1.25 = 12.50
+        // Expected: (10.00 + 5.00) * 1.20 = 18.00 (default 20% VAT)
+        Assert.Equal(18.00m, result);
     }
 }

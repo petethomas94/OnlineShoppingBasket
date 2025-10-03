@@ -70,3 +70,9 @@ The API will be available at `https://localhost:7213` (HTTPS) or `http://localho
 - In memory storage solution is not thread safe meaning multiple users could modify the same basket.
 - No authentication meaning users can access all baskets.
 
+## Issues Addressed
+-   BasketRepository.AddItemToBasket now increments quantity instead of replacing.
+-   Basket level discounts can not be applied on top of individual discounts.
+-   Fix discount mismatch in repository
+-   Fix shipping cost mismatch in repository
+-   Fix failing tests due to ShippingCost not being set on basket

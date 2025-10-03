@@ -11,7 +11,7 @@ public class DiscountRepository : IDiscountRepository
             "1", new Discount()
             {
                 Name = "5% Off",
-                Percentage = 0.5m,
+                Percentage = 5m,
                 Id = "1"
             }
         }

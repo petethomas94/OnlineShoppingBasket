@@ -23,7 +23,7 @@ public class BasketRepository : IBasketRepository
 
         if (basket.Items.Any(x => x.ProductId == item.ProductId))
         {
-            basket.Items.Single(x => x.ProductId == item.ProductId).Quantity = item.Quantity;
+            basket.Items.Single(x => x.ProductId == item.ProductId).Quantity += item.Quantity;
             return;
         }
 
