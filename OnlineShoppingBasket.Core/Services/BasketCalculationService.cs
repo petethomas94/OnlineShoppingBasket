@@ -51,7 +51,7 @@ public class BasketCalculationService : IBasketCalculationService
                 // Item has individual discount - apply it and exclude from basket discount
                 var discount = discounts[item.DiscountId];
                 var discountAmount = itemTotal * (discount.Percentage / 100m);
-                itemsWithDiscountTotal += itemTotal - Math.Min(discountAmount, itemTotal);
+                itemsWithDiscountTotal += itemTotal - discountAmount;
             }
             else
             {
@@ -65,7 +65,7 @@ public class BasketCalculationService : IBasketCalculationService
         {
             var basketDiscount = discounts[basket.DiscountId];
             var basketDiscountAmount = itemsWithoutDiscountTotal * (basketDiscount.Percentage / 100m);
-            itemsWithoutDiscountTotal -= Math.Min(basketDiscountAmount, itemsWithoutDiscountTotal);
+            itemsWithoutDiscountTotal -= basketDiscountAmount;
         }
 
         return itemsWithDiscountTotal + itemsWithoutDiscountTotal + (shippingCost?.Price ?? 0);
