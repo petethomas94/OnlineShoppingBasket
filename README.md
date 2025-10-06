@@ -76,3 +76,8 @@ The API will be available at `https://localhost:7213` (HTTPS) or `http://localho
 -   Fix discount mismatch in repository
 -   Fix shipping cost mismatch in repository
 -   Fix failing tests due to ShippingCost not being set on basket
+
+## Things I would like to do with more time
+-   Extract input validation logic from controller
+-   Move more code from controllers to service layer to keep controllers thin and only concerned with HTTP/routing
+

@@ -53,6 +53,11 @@ public class BasketController : ControllerBase
             return NotFound("Basket not found.");
         }
 
+        if (basketItems == null || !basketItems.Any())
+        {
+            return BadRequest("No items provided.");
+        }
+
         var validationErrors = ValidateBasketItems(basketItems);
 
         if (validationErrors.Any())

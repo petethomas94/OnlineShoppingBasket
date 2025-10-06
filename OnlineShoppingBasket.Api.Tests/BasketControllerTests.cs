@@ -126,6 +126,39 @@ public class BasketControllerTests
         _basketRepository.Verify(x => x.AddItemToBasket(_basket.Id, basketItem), Times.Once);
     }
 
+    [Fact]
+    public void AddItem_ReturnsBadRequest_WhenNoItemsProvided()
+    {
+        // Arrange
+        var emptyBasketItems = new List<BasketItem>();
+        SetupBasketExists();
+
+        // Act
+        var result = _basketController.AddItem(_basket.Id, emptyBasketItems);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No items provided.", badRequestResult.Value);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+        _basketRepository.Verify(x => x.AddItemToBasket(It.IsAny<string>(), It.IsAny<BasketItem>()), Times.Never);
+    }
+
+    [Fact]
+    public void AddItem_ReturnsBadRequest_WhenItemsIsNull()
+    {
+        // Arrange
+        SetupBasketExists();
+
+        // Act
+        var result = _basketController.AddItem(_basket.Id, null);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("No items provided.", badRequestResult.Value);
+        Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
+        _basketRepository.Verify(x => x.AddItemToBasket(It.IsAny<string>(), It.IsAny<BasketItem>()), Times.Never);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
