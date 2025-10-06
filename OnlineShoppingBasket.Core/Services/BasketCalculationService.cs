@@ -44,7 +44,12 @@ public class BasketCalculationService : IBasketCalculationService
 
         foreach (var item in basket.Items)
         {
-            var itemTotal = products[item.ProductId].Price * item.Quantity;
+            if (!products.TryGetValue(item.ProductId, out var product))
+            {
+                throw new InvalidOperationException($"Product {item.ProductId} not found.");
+            }
+
+            var itemTotal = product.Price * item.Quantity;
             
             if (!string.IsNullOrEmpty(item.DiscountId) && discounts.ContainsKey(item.DiscountId))
             {

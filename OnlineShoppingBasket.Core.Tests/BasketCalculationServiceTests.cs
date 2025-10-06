@@ -289,4 +289,28 @@ public class BasketCalculationServiceTests
         // Expected: (10.00 + 5.00) * 1.20 = 18.00 (default 20% VAT)
         Assert.Equal(18.00m, result);
     }
+
+    [Fact]
+    public void CalculateTotal_ThrowsInvalidOperationException_WhenProductNotFound()
+    {
+        // Arrange
+        var basket = new Basket
+        {
+            Id = "basket1",
+            ShippingTo = "FR",
+            Items = new List<BasketItem>
+            {
+                new() { ProductId = "missing-product", Quantity = 1 }
+            }
+        };
+
+        var products = new Dictionary<string, Product>(); // Empty - product not found
+
+        _productRepository.Setup(x => x.GetProductsById(It.IsAny<IEnumerable<string>>())).Returns(products);
+        _discountRepository.Setup(x => x.GetDiscountsById(It.IsAny<IEnumerable<string>>())).Returns(new Dictionary<string, Discount>());
+
+        // Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() => _basketCalculationService.CalculateTotal(basket));
+        Assert.Equal("Product missing-product not found.", exception.Message);
+    }
 }
