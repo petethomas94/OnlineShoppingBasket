@@ -234,7 +234,7 @@ public class BasketControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Discount nonexistent-discount not found.", badRequestResult.Value);
+        Assert.Equal("Discount not found nonexistent-discount.", badRequestResult.Value);
         Assert.Equal(StatusCodes.Status400BadRequest, badRequestResult.StatusCode);
         _basketRepository.Verify(x => x.AddItemToBasket(It.IsAny<string>(), It.IsAny<BasketItem>()), Times.Never);
     }
@@ -512,7 +512,7 @@ public class BasketControllerTests
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
-        Assert.Equal($"Discount not found {discountId}", notFoundResult.Value);
+        Assert.Equal($"Discount not found {discountId}.", notFoundResult.Value);
         Assert.Equal(StatusCodes.Status404NotFound, notFoundResult.StatusCode);
         _basketRepository.Verify(x => x.SaveBasket(It.IsAny<Basket>()), Times.Never);
     }

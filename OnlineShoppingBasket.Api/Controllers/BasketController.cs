@@ -41,7 +41,7 @@ public class BasketController : ControllerBase
     public ActionResult<Basket> GetBasket(string basketId)
     {
         var basket = _basketRepository.GetBasket(basketId);
-        return basket == null ? NotFound("Basket not found.") : Ok(basket);
+        return basket == null ? NotFound(ErrorMessages.BasketNotFound) : Ok(basket);
     }
 
     [HttpPost("{basketId}/items")]
@@ -50,12 +50,12 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
 
         if (basketItems == null || !basketItems.Any())
         {
-            return BadRequest("No items provided.");
+            return BadRequest(ErrorMessages.NoItemsProvided);
         }
 
         var validationErrors = ValidateBasketItems(basketItems);
@@ -79,12 +79,12 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
 
         if (basket.Items.All(x => x.ProductId != productId))
         {
-            return NotFound($"Product {productId} not found in basket");
+            return NotFound(string.Format(ErrorMessages.ProductNotFoundInBasket, productId));
         }
 
         _basketRepository.RemoveItemFromBasket(basketId, productId);
@@ -97,11 +97,11 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
         if (string.IsNullOrEmpty(basket.ShippingTo))
         {
-            return BadRequest("Add a shipping destination before calculating total.");
+            return BadRequest(ErrorMessages.MissingShippingDestination);
         }
         
         var totalWithVat = _basketCalculationService.CalculateTotalWithVat(basket);
@@ -114,11 +114,11 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
         if (string.IsNullOrEmpty(basket.ShippingTo))
         {
-            return BadRequest("Add a shipping destination before calculating total.");
+            return BadRequest(ErrorMessages.MissingShippingDestination);
         }
 
         var totalWithoutVat = _basketCalculationService.CalculateTotal(basket);
@@ -131,13 +131,13 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
 
         var discount = _discountRepository.GetDiscountById(discountId);
         if (discount == null)
         {
-            return NotFound($"Discount not found {discountId}");
+            return NotFound(string.Format(ErrorMessages.DiscountNotFound, discountId));
         }
 
         basket.DiscountId = discountId;
@@ -151,13 +151,13 @@ public class BasketController : ControllerBase
         var basket = _basketRepository.GetBasket(basketId);
         if (basket == null)
         {
-            return NotFound("Basket not found.");
+            return NotFound(ErrorMessages.BasketNotFound);
         }
 
         var shippingCost = _shippingCostRepository.GetShippingCostByCountry(country);
         if (shippingCost == null)
         {
-            return NotFound($"Shipping not supported for {country}");
+            return NotFound(string.Format(ErrorMessages.UnsupportedShipping, country));
         }
 
         basket.ShippingTo = country;
@@ -172,13 +172,13 @@ public class BasketController : ControllerBase
         {
             if (basketItem.Quantity <= 0)
             {
-                validationErrors.Add($"Quantity must be greater than 0 for product {basketItem.ProductId}.");
+                validationErrors.Add(string.Format(ErrorMessages.InvalidQuantity, basketItem.ProductId));
             }
 
             var product = _productRepository.GetProductById(basketItem.ProductId);
             if (product == null)
             {
-                validationErrors.Add($"Product {basketItem.ProductId} not found.");
+                validationErrors.Add(string.Format(ErrorMessages.ProductNotFound, basketItem.ProductId));
             }
 
             if (string.IsNullOrEmpty(basketItem.DiscountId))
@@ -188,7 +188,7 @@ public class BasketController : ControllerBase
             var discount = _discountRepository.GetDiscountById(basketItem.DiscountId);
             if (discount == null)
             {
-                validationErrors.Add($"Discount {basketItem.DiscountId} not found.");
+                validationErrors.Add(string.Format(ErrorMessages.DiscountNotFound, basketItem.DiscountId));
             }
         }
 
