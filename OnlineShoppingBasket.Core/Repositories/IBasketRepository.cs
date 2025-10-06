@@ -7,4 +7,5 @@ public interface IBasketRepository
     void SaveBasket(Basket basket);
     Basket? GetBasket(string id);
     void AddItemToBasket(string basketId, BasketItem item);
+    void RemoveItemFromBasket(string basketId, string productId);
 }

@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Api", "OnlineShoppingBasket.Api\OnlineShoppingBasket.Api.csproj", "{02D72CD6-551E-4909-BB31-70AD9E2AE161}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Models", "OnlineShoppingBasket.Models\OnlineShoppingBasket.Models.csproj", "{7EE78465-DF20-408E-90B6-AFEBBB8F393D}"
@@ -20,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.Infrastructure.Tests", "OnlineShoppingBasket.Infrastructure.Tests\OnlineShoppingBasket.Infrastructure.Tests.csproj", "{6A684B13-65F5-4CAC-942A-61CFD2209DD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineShoppingBasket.IntegrationTests", "OnlineShoppingBasket.IntegrationTests\OnlineShoppingBasket.IntegrationTests.csproj", "{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,10 +58,15 @@ Global
 		{6A684B13-65F5-4CAC-942A-61CFD2209DD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A684B13-65F5-4CAC-942A-61CFD2209DD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A684B13-65F5-4CAC-942A-61CFD2209DD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{EDCB0630-59FD-446B-847D-5D23B6B4D7B4} = {B00775D2-BA8B-47DF-8765-B671822AE773}
 		{FCE76C9A-A50E-4691-BC11-5A1BF5826674} = {B00775D2-BA8B-47DF-8765-B671822AE773}
 		{6A684B13-65F5-4CAC-942A-61CFD2209DD4} = {B00775D2-BA8B-47DF-8765-B671822AE773}
+		{C70686F5-B95D-4FFD-8D2C-2E8BF38986B3} = {B00775D2-BA8B-47DF-8765-B671822AE773}
 	EndGlobalSection
 EndGlobal

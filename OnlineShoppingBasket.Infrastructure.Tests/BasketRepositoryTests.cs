@@ -105,4 +105,81 @@ public class BasketRepositoryTests
         // Assert
         Assert.Null(basket);
     }
+
+    [Fact]
+    public void RemoveItemFromBasket_RemovesItem_WhenItemExists()
+    {
+        // Arrange
+        var basket = new Basket { Id = "basket1" };
+        _basketRepository.SaveBasket(basket);
+        
+        var basketItem = new BasketItem { ProductId = "product1", Quantity = 2 };
+        _basketRepository.AddItemToBasket(basket.Id, basketItem);
+
+        // Act
+        _basketRepository.RemoveItemFromBasket(basket.Id, "product1");
+
+        // Assert
+        var updatedBasket = _basketRepository.GetBasket(basket.Id);
+        Assert.Empty(updatedBasket.Items);
+    }
+
+    [Fact]
+    public void RemoveItemFromBasket_RemovesCorrectItem_WhenMultipleItemsExist()
+    {
+        // Arrange
+        var basket = new Basket { Id = "basket1" };
+        _basketRepository.SaveBasket(basket);
+        
+        var basketItem1 = new BasketItem { ProductId = "product1", Quantity = 2 };
+        var basketItem2 = new BasketItem { ProductId = "product2", Quantity = 3 };
+        _basketRepository.AddItemToBasket(basket.Id, basketItem1);
+        _basketRepository.AddItemToBasket(basket.Id, basketItem2);
+
+        // Act
+        _basketRepository.RemoveItemFromBasket(basket.Id, "product1");
+
+        // Assert
+        var updatedBasket = _basketRepository.GetBasket(basket.Id);
+        Assert.Single(updatedBasket.Items);
+        
+        var remainingItem = updatedBasket.Items.First();
+        Assert.Equal("product2", remainingItem.ProductId);
+        Assert.Equal(3, remainingItem.Quantity);
+    }
+
+    [Fact]
+    public void RemoveItemFromBasket_ThrowsException_WhenItemDoesNotExist()
+    {
+        // Arrange
+        var basket = new Basket { Id = "basket1" };
+        _basketRepository.SaveBasket(basket);
+        
+        var basketItem = new BasketItem { ProductId = "product1", Quantity = 2 };
+        _basketRepository.AddItemToBasket(basket.Id, basketItem);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => 
+            _basketRepository.RemoveItemFromBasket(basket.Id, "nonexistent-product"));
+    }
+
+    [Fact]
+    public void RemoveItemFromBasket_ThrowsException_WhenBasketDoesNotExist()
+    {
+        // Act & Assert
+        Assert.Throws<KeyNotFoundException>(() => 
+            _basketRepository.RemoveItemFromBasket("nonexistent-basket", "product1"));
+    }
+
+    [Fact]
+    public void RemoveItemFromBasket_ThrowsException_WhenBasketIsEmpty()
+    {
+        // Arrange
+        var basket = new Basket { Id = "basket1" };
+        _basketRepository.SaveBasket(basket);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => 
+            _basketRepository.RemoveItemFromBasket(basket.Id, "product1"));
+    }
 }

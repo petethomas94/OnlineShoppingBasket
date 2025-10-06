@@ -8,11 +8,19 @@ public class DiscountRepository : IDiscountRepository
     private readonly Dictionary<string, Discount> _discounts = new()
     {
         {
-            "1", new Discount()
+            "5PERCENT", new Discount()
             {
                 Name = "5% Off",
                 Percentage = 5m,
-                Id = "1"
+                Id = "5PERCENT"
+            }
+        },
+        {
+            "10PERCENT", new Discount()
+            {
+                Name = "10% Off",
+                Percentage = 10m,
+                Id = "10PERCENT"
             }
         }
     };

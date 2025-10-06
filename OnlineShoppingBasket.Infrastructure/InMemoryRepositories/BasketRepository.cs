@@ -29,4 +29,11 @@ public class BasketRepository : IBasketRepository
 
         basket.Items.Add(item);
     }
+
+    public void RemoveItemFromBasket(string basketId, string productId)
+    {
+        var basket = _baskets[basketId];
+        var basketItem = basket.Items.Single(x => x.ProductId == productId);
+        basket.Items.Remove(basketItem);
+    }
 }

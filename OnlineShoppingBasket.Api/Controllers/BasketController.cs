@@ -53,32 +53,19 @@ public class BasketController : ControllerBase
             return NotFound("Basket not found.");
         }
 
+        var validationErrors = ValidateBasketItems(basketItems);
+
+        if (validationErrors.Any())
+        {
+            return BadRequest(string.Join(", ", validationErrors));
+        }
+
         foreach (var basketItem in basketItems)
         {
-            if (basketItem.Quantity <= 0)
-            {
-                return BadRequest($"Quantity must be greater than 0 for product {basketItem.ProductId}.");
-            }
-
-            var product = _productRepository.GetProductById(basketItem.ProductId);
-            if (product == null)
-            {
-                return NotFound($"Product {basketItem.ProductId} not found.");
-            }
-
-            if (basketItem.DiscountId != null)
-            {
-                var discount = _discountRepository.GetDiscountById(basketItem.DiscountId);
-                if (discount == null)
-                {
-                    return NotFound($"Discount {basketItem.DiscountId} not found.");
-                }    
-            }
-
             _basketRepository.AddItemToBasket(basketId, basketItem);
         }
 
-        return Ok(basket);
+        return Ok(_basketRepository.GetBasket(basketId));
     }
 
     [HttpDelete("{basketId}/items/{productId}")]
@@ -90,17 +77,15 @@ public class BasketController : ControllerBase
             return NotFound("Basket not found.");
         }
 
-        var basketItem = basket.Items.FirstOrDefault(x => x.ProductId == productId);
-        if (basketItem == null)
+        if (basket.Items.All(x => x.ProductId != productId))
         {
-            return NotFound($"Trying to remove product which does not exist in order {productId}");
+            return NotFound($"Product {productId} not found in basket");
         }
 
-        basket.Items.Remove(basketItem);
-        _basketRepository.SaveBasket(basket);
-        return Ok(basket);
+        _basketRepository.RemoveItemFromBasket(basketId, productId);
+        return Ok(_basketRepository.GetBasket(basketId));
     }
-    
+
     [HttpGet("{basketId}/total")]
     public ActionResult<decimal> GetBasketTotal(string basketId)
     {
@@ -109,7 +94,7 @@ public class BasketController : ControllerBase
         {
             return NotFound("Basket not found.");
         }
-        if (basket.ShippingTo == null)
+        if (string.IsNullOrEmpty(basket.ShippingTo))
         {
             return BadRequest("Add a shipping destination before calculating total.");
         }
@@ -117,7 +102,7 @@ public class BasketController : ControllerBase
         var totalWithVat = _basketCalculationService.CalculateTotalWithVat(basket);
         return Ok(totalWithVat);
     }
-    
+
     [HttpGet("{basketId}/totalWithoutVat")]
     public ActionResult<decimal> GetBasketTotalWithoutVat(string basketId)
     {
@@ -126,7 +111,7 @@ public class BasketController : ControllerBase
         {
             return NotFound("Basket not found.");
         }
-        if (basket.ShippingTo == null)
+        if (string.IsNullOrEmpty(basket.ShippingTo))
         {
             return BadRequest("Add a shipping destination before calculating total.");
         }
@@ -154,7 +139,7 @@ public class BasketController : ControllerBase
         _basketRepository.SaveBasket(basket);
         return Ok(basket);
     }
-    
+
     [HttpPost("{basketId}/shippingcost/{country}")]
     public ActionResult<Basket> AddShippingCostToBasket(string basketId, string country)
     {
@@ -164,8 +149,8 @@ public class BasketController : ControllerBase
             return NotFound("Basket not found.");
         }
 
-        var discount = _shippingCostRepository.GetShippingCostByCountry(country);
-        if (discount == null)
+        var shippingCost = _shippingCostRepository.GetShippingCostByCountry(country);
+        if (shippingCost == null)
         {
             return NotFound($"Shipping not supported for {country}");
         }
@@ -173,5 +158,35 @@ public class BasketController : ControllerBase
         basket.ShippingTo = country;
         _basketRepository.SaveBasket(basket);
         return Ok(basket);
+    }
+
+    private List<string> ValidateBasketItems(IEnumerable<BasketItem> basketItems)
+    {
+        var validationErrors = new List<string>();
+        foreach (var basketItem in basketItems)
+        {
+            if (basketItem.Quantity <= 0)
+            {
+                validationErrors.Add($"Quantity must be greater than 0 for product {basketItem.ProductId}.");
+            }
+
+            var product = _productRepository.GetProductById(basketItem.ProductId);
+            if (product == null)
+            {
+                validationErrors.Add($"Product {basketItem.ProductId} not found.");
+            }
+
+            if (string.IsNullOrEmpty(basketItem.DiscountId))
+            {
+                continue;    
+            }
+            var discount = _discountRepository.GetDiscountById(basketItem.DiscountId);
+            if (discount == null)
+            {
+                validationErrors.Add($"Discount {basketItem.DiscountId} not found.");
+            }
+        }
+
+        return validationErrors;
     }
 }
